@@ -116,7 +116,7 @@ BAITS = {
     "glow_bait": {"id": "glow_bait", "name": "夜光饵", "cost": 35, "description": "在黑暗中散发幽幽蓝光，对夜行性鱼类格外有吸引力。", "effects": {"rarity_weight_mult": {"rare": 1.5, "epic": 1.3}, "tag_weight_mult": {"nocturnal": 2.0}, "junk_chance_mult": 0.8}},
     "golden_lure": {"id": "golden_lure", "name": "黄金亮片", "cost": 80, "description": "华丽的金色旋转亮片，全稀有度的鱼都更容易上钩。", "effects": {"rarity_weight_mult": {"rare": 1.4, "epic": 1.6, "legendary": 2.0, "mythic": 2.0}, "junk_chance_mult": 0.7}},
 }
-# 特殊事件 / 物品：留空 = 不触发（DS 填了内容自动激活）
+# 特殊事件 / 物品：留空 = 不触发（填了内容自动激活）
 EVENTS = json.loads(r"""{"drift_bottle":{"id":"drift_bottle","name":"漂流瓶","type":"bottle","weight":145,"unique":true,"description":"一只随波而来的玻璃瓶撞上你的浮标——瓶里卷着一张陌生人写的纸条。","messages":["（致捞到这只瓶子的人：今天也辛苦啦，愿你下一竿就是大鱼。——一个把烦恼塞进瓶子扔进海里的人）","（瓶子里只有一句话：如果你读到这里，说明海把它送对了人。祝你好运。）","（一张被海水泡得发皱的纸条，上面画着一条歪歪扭扭的鱼，旁边写着：我钓了一整天，只钓到这只瓶子。哈。）","（恭喜你捞到一只空瓶——里面什么都没有，连张纸条都没有。就当大海跟你打了个招呼吧。）","（纸条上是一行陌生的字：愿你所求皆有回响，愿你所钓皆有惊喜。落款是一个谁也认不出的签名。）","（瓶里卷着半角旧海图，海岸线早被水泡得模糊，只有一处被红笔圈住，写着「这片海的鱼最好钓」——可惜没人知道是哪片海。）"],"rewards":{}},"floating_coral_pearl":{"id":"floating_coral_pearl","name":"漂来的珊瑚珠","type":"treasure","weight":18,"description":"浪尖上托着一颗粉红的珍珠，随着波光上下起浮，像一朵珊瑚花。","rewards":{"items":[{"id":"coral_pearl","qty":1}]}},"ambergris_chunk":{"id":"ambergris_chunk","name":"浮香的龙涎","type":"treasure","weight":10,"description":"一块灰白的蜡状物漂浮过来，空气里忽然漫开一股奇异的幽香。","rewards":{"items":[{"id":"ambergris","qty":1}]}},"rusty_chest":{"id":"rusty_chest","name":"锈迹宝箱","type":"chest","weight":25,"description":"一只包着铁皮的旧木箱浮出水面，铁锁布满红锈，但依然坚固。","lock":{"or_points":80},"loot_table":[{"weight":60,"reward":{"points_range":[100,200]}},{"weight":15,"reward":{"items":[{"id":"ancient_key","qty":1}]}},{"weight":15,"reward":{"items":[{"id":"gem_sapphire","qty":1}]}},{"weight":5,"reward":{"bait":[{"id":"golden_lure","qty":1}]}},{"weight":5,"reward":{"items":[{"id":"shipwreck_coin","qty":1}]}}]},"barnacle_chest":{"id":"barnacle_chest","name":"藤壶密箱","type":"chest","weight":20,"description":"一只被藤壶层层包裹的石箱，盖子上刻着古老的漩涡纹，没有锁孔，却紧密得几乎撬不开。","lock":{"or_points":60},"loot_table":[{"weight":50,"reward":{"points_range":[80,180]}},{"weight":30,"reward":{"items":[{"id":"moonstone","qty":1}]}},{"weight":20,"reward":{"bait":[{"id":"glow_bait","qty":3}]}}]},"ancient_captain_chest":{"id":"ancient_captain_chest","name":"船长遗箱","type":"chest","weight":8,"description":"一只雕着海怪缠锚图案的暗铜宝箱，从深水缓缓升起，海水从锁孔里汩汩流出。","lock":{"requires_item":"ancient_key","or_points":200},"loot_table":[{"weight":40,"reward":{"points_range":[150,300]}},{"weight":35,"reward":{"items":[{"id":"moonstone","qty":1},{"id":"gem_sapphire","qty":1}]}},{"weight":25,"reward":{"bait":[{"id":"golden_lure","qty":2}]}}]}}""")
 ITEMS = json.loads(r"""{"coral_pearl":{"id":"coral_pearl","name":"珊瑚珍珠","type":"treasure","description":"粉红色的珍珠，带着珊瑚的温润光泽，仿佛刚从人鱼的王冠上摘下。","value":150,"sellable":true},"gem_sapphire":{"id":"gem_sapphire","name":"蓝宝石","type":"treasure","description":"深海般的蓝色，里面封存着浪涛的纹路，轻晃时仿佛有潮声。","value":300,"sellable":true},"moonstone":{"id":"moonstone","name":"月光石","type":"treasure","description":"乳白色的石头上流转着月华般的光晕，传说月光凝结而成。","value":450,"sellable":true},"ambergris":{"id":"ambergris","name":"龙涎香","type":"treasure","description":"传说中的鲸之宝，散发着奇异幽香，正是香料商人梦寐以求的至宝。","value":500,"sellable":true},"shipwreck_coin":{"id":"shipwreck_coin","name":"沉船金币","type":"treasure","description":"一枚古老的金币，正面刻着模糊的王冠，背面是早已沉没的船名。","value":200,"sellable":true},"ancient_key":{"id":"ancient_key","name":"古老的钥匙","type":"key","description":"一把沉重的黄铜钥匙，尾端雕着海怪缠锚的图案，握在手里仿佛能听见远航的号角。","value":0,"sellable":false}}""")
 
@@ -242,8 +242,7 @@ def _resolve_event(rng):
         idx = avail[rng.rint(0, len(avail) - 1)]
         seen.append(idx)
         parts = _grant_rewards(rng, ev.get("rewards"))
-        photo = ("\n[[photo:%s]]" % ev["photos"][str(idx)]) if ev.get("photos", {}).get(str(idx)) else ""
-        return "📜 %s！%s\n%s\n★ 收到新的一封！（已收集 %d/%d，用 encyclopedia 回看）%s\n%s%s" % (ev["name"], ev["description"], ev["messages"][idx], len(seen), len(ev["messages"]), ("\n获得 " + "、".join(parts)) if parts else "", _footer(), photo)
+        return "📜 %s！%s\n%s\n★ 收到新的一封！（已收集 %d/%d，用 encyclopedia 回看）%s\n%s" % (ev["name"], ev["description"], ev["messages"][idx], len(seen), len(ev["messages"]), ("\n获得 " + "、".join(parts)) if parts else "", _footer())
     msg = ""
     if ev["type"] == "bottle" and ev.get("messages"):
         msg = "\n" + ev["messages"][rng.rint(0, len(ev["messages"]) - 1)]
@@ -561,7 +560,6 @@ def cmd(line=""):
         # 公开 API 兜底：任何意外（含格式错）都返回友好文字，绝不向调用方抛栈
         return _drain_warn("这条指令没读懂（%s）。看 cmd('help')，例：buy basic_worm 2 / cast 10 stop=rare。" % e)
     _save()
-    out = re.sub(r"\n?\[\[photo:[^\]\n]+\]\]", "", out)
     return _drain_warn(out)
 
 def new_game(seed=_DEFAULT_SEED):
