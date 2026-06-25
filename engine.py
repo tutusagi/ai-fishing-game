@@ -1706,8 +1706,9 @@ def _resolve_dive_encounter(rng, enc):
     return "%s ✨【%s】%s%s" % (enc.get("emoji", "🌊"), enc["name"], enc["text"], body)
 def _roll_luck(rng, pool, bait_id, f, size, inst, mode="cast"):
     if rng.random() >= LUCK_CHANCE: return "", None
-    dive_pool = [{"id": e["id"], "weight": e["weight"]} for e in DIVE_ENCOUNTERS] if mode == "dive" else []
-    eid = _pick_by_weight(rng, _LUCK_EVENTS + dive_pool)["id"]
+    # 潜水只出水下奇遇/大遗迹，不复用水面幸运事件（分裂鱼钩/河神祝福等在水下出戏、还会凭空生成鱼饵）
+    events = [{"id": e["id"], "weight": e["weight"]} for e in DIVE_ENCOUNTERS] if mode == "dive" else _LUCK_EVENTS
+    eid = _pick_by_weight(rng, events)["id"]
     if eid == "split_hook":   # 鱼钩一分为三：再钓上两条
         weights = [_eff_weight(g, S["location_id"], S["season_id"], bait_id) for g in pool]
         got = []
@@ -1872,10 +1873,8 @@ def _exp_run(rng):
         if not r["consumed"]: break
         exp["done"] += 1
         rank = _RARITY_RANK.get(r.get("rarity", ""), 0); bid = r.get("luck")
-        if r["kind"] == "fish":
-            exp["caught"][r["fish_name"]] = exp["caught"].get(r["fish_name"], 0) + 1; exp["cn"] += 1
-            if r["first"]: exp["nn"] += 1
-        elif r["kind"] == "junk": exp["jn"] += 1
+        # 渔获条数/新种/名单一律在结算时从库存增量重算（分裂鱼钩/热潮/分支鱼奖励等额外渔获也算进去）
+        if r["kind"] == "junk": exp["jn"] += 1
         elif r["kind"] == "empty": exp["en"] += 1
         if bid in _DIVE_BRANCH_IDS:   # 大遗迹 → 暂停做抉择
             exp["pending"] = bid; seg.append(r["text"])
@@ -1891,14 +1890,19 @@ def _exp_run(rng):
     return body + _exp_settle(reason)
 def _exp_settle(reason):
     exp = S.pop("expedition")
-    catch_value = sum(c["value"] for c in S["catch_inventory"][exp["inv0"]:])
+    trip = S["catch_inventory"][exp["inv0"]:]   # 本趟所有渔获（含分裂/热潮/分支鱼奖励的额外条）
+    catch_value = sum(c["value"] for c in trip)
+    by = {}
+    for c in trip: nm = FISH.get(c["fish_id"], {}).get("name", c["fish_id"]); by[nm] = by.get(nm, 0) + 1
+    caught_n = len(trip)
+    enc0 = set(exp.get("enc0", [])); new_n = len({c["fish_id"] for c in trip} - enc0)
     treasure_value = sum(ITEMS.get(k, {}).get("value", 0) * (S["items"].get(k, 0) - exp["items0"].get(k, 0)) for k in S.get("items", {}))
     extra_in = treasure_value + (S["points"] - exp["pts0"])
     oxy_spent = exp["oxy0"] - S.get("oxygen", 0); cost = oxy_spent * OXYGEN["cost"]; net = catch_value + extra_in - cost
-    haul = "、".join("%s×%d" % (n, c) for n, c in exp["caught"].items()) or "空潜"
+    haul = "、".join("%s×%d" % (n, c) for n, c in by.items()) or "空潜"
     if reason is None: reason = "氧气耗尽" if S.get("oxygen", 0) <= 0 else "潜满 %d 次" % exp["done"]
     s = "—— 🤿 远征结算 ——"
-    s += "\n🐟 渔获 %d 条%s：%s（可卖约 %d 点）" % (exp["cn"], ("，新种 %d" % exp["nn"]) if exp["nn"] else "", haul, catch_value)
+    s += "\n🐟 渔获 %d 条%s：%s（可卖约 %d 点）" % (caught_n, ("，新种 %d" % new_n) if new_n else "", haul, catch_value)
     if extra_in: s += "\n🎁 宝物/事件/新发现：+%d 点" % extra_in
     if exp["jn"] + exp["en"]: s += "\n🪨 空手 %d 次" % (exp["jn"] + exp["en"])
     s += "\n⛽ 氧气花费：%d 瓶（约 -%d 点）\n💰 本趟净值：约 %+d 点（卖掉渔获/宝物后）" % (oxy_spent, cost, net)
@@ -1913,8 +1917,8 @@ def _dive_start(n, stop_on):
     n = max(1, min(20, int(n)))
     rng = _Rng(S["rngState"], S["rngCalls"])
     S["expedition"] = {"left": n, "pending": None, "oxy0": S["oxygen"], "pts0": S["points"],
-                       "inv0": len(S["catch_inventory"]), "items0": dict(S.get("items", {})),
-                       "done": 0, "caught": {}, "cn": 0, "nn": 0, "jn": 0, "en": 0, "stop": list(stop_on or [])}
+                       "inv0": len(S["catch_inventory"]), "items0": dict(S.get("items", {})), "enc0": list(S["encyclopedia"]),
+                       "done": 0, "jn": 0, "en": 0, "stop": list(stop_on or [])}
     opts = LOCATIONS[loc_id].get("dive_ambience", {}).get(S["season_id"], [])
     scene = ("🤿 " + opts[rng.rint(0, len(opts) - 1)] + "\n\n") if opts else ""
     return scene + _exp_run(rng)   # _exp_run 自己回写 rng
