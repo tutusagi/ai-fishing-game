@@ -1350,7 +1350,7 @@ def _grant_rewards(rng, rw):
         gf = FISH.get(rw["fish"])
         if gf:
             gs = _roll_size(rng, gf); gv = _value(gf, gs); _gi, gfirst, _gb = _record_catch(gf, gs, gv)
-            parts.append("%s%s %s%s" % (gf["name"], "★新发现" if gfirst else "", gs, gf["size_unit"]))
+            parts.append("%s%s %s%s%s" % (gf["name"], "★新发现" if gfirst else "", gs, gf["size_unit"], _milestone_line(gf, gfirst)))
     if rw.get("oxygen"):
         S["oxygen"] = S.get("oxygen", 0) + rw["oxygen"]; S["oxygen_ever"] = True; parts.append("氧气瓶×%d" % rw["oxygen"])
     if rw.get("chest"):   # 得到一只待开宝箱（event_id 在 EVENTS 或 DIVE_EVENTS）
@@ -1634,13 +1634,13 @@ def _format_catch(f, size, value, inst, first):
     u = f["size_unit"]; r = f["rarity"]; rl = RARITY[r]["label"]
     cf = ("\n🫧 " + f["capture_feel"]) if f.get("capture_feel") else ""   # 手感(水下鱼)，与图鉴描述并存
     flavor = f.get("description", "") + cf
-    if r in ("legendary", "mythic"):   # 完整演出
-        top = "👑 ─── 传 说 ─── 👑" if r == "legendary" else "✧ ────── ❖ 神 话 ❖ ────── ✧"
+    if r in ("legendary", "mythic"):   # 完整演出，🎉 留给传说/神话这种大场面
+        top = "🎉 👑 ─── 传 说 ─── 👑" if r == "legendary" else "🎉 ✧ ──── ❖ 神 话 ❖ ──── ✧"
         nm = "（★首次收录 +%d点）" % RARITY[r]["discovery_bonus"] if first else ""
         body = "%s · %s%s · %d点%s\n%s%s" % (f["name"], size, u, value, nm, flavor, ("\n📜 " + f["rumor"]) if f.get("rumor") else "")
         return "%s\n%s\n%s" % (top, body, top) if r == "mythic" else "%s\n%s" % (top, body)
-    if first:   # 🎉 图鉴新发现仪式行在最上一行，下面 🆕 紧凑头 + 图鉴描述 + 🫧手感（都保留）
-        return "🎉 图鉴新发现！首次收录奖励 +%d 点\n🆕 %s · %s · %s%s · %d点\n%s" % (RARITY[r]["discovery_bonus"], f["name"], rl, size, u, value, flavor)
+    if first:   # 🆕 新发现：紧凑头 + 图鉴描述 + 🫧手感 + 首次收录奖励（不抢戏，🎉 留给传说/里程碑）
+        return "🆕 %s · %s · %s%s · %d点\n%s\n首次收录 +%d点" % (f["name"], rl, size, u, value, flavor, RARITY[r]["discovery_bonus"])
     if r in ("rare", "epic"):
         return "%s %s · %s%s · %d点\n%s" % ("✦✦ 史诗" if r == "epic" else "✦ 稀有", f["name"], size, u, value, flavor)
     return "· %s%s %s%s +%d" % (f["name"], "（少见）" if r == "uncommon" else "", size, u, value)
@@ -1672,6 +1672,16 @@ def _record_catch(f, size, value):
     bonus = RARITY[f["rarity"]]["discovery_bonus"] if first else 0
     if bonus: S["points"] += bonus
     return inst, first, bonus
+# 图鉴里程碑播报（🎉 留给大场面）：刚收录的这条若达成「某档集齐 / 整十 / 全收集」就播一行
+def _milestone_line(f, first):
+    if not first: return ""
+    got = len(S["encyclopedia"]); total = len(FISH)
+    if got >= total: return "\n🎉🎉 全图鉴收集完成！%d 种鱼悉数收录，你是这片水域的传奇。" % total
+    tier = [x for x in FISH.values() if x["rarity"] == f["rarity"]]
+    if tier and all(x["id"] in S["encyclopedia"] for x in tier):
+        return "\n🎉 「%s」鱼已集齐！(%d 种全收录)" % (RARITY[f["rarity"]]["label"], len(tier))
+    if got % 10 == 0: return "\n🎉 图鉴达成 %d/%d 种！" % (got, total)
+    return ""
 
 # ── 潜水点解锁：水面钓鱼集藏宝图碎片，集齐拼成该地藏宝图 → 解锁这里的潜水 ──
 _FRAG_CHANCE = 0.15   # 水面钓到鱼时、本地潜水未解锁，额外捞到一块碎片的概率
@@ -1815,7 +1825,7 @@ def _cast_step(rng, bait_id, mode="cast"):
     secret = "" if dive else _secret_hint()
     be = bait["effects"]   # 鱼饵反馈：这条是否命中了所用饵的偏好（稀有度/标签加成）
     pref = bool(be) and (f["rarity"] in be.get("rarity_weight_mult", {}) or any(t in be.get("tag_weight_mult", {}) for t in f.get("tags", [])))
-    return {"text": season_msg + "%s%s%s%s%s%s" % (_format_catch(f, size, value, inst, first), fever_line, luck_seg, frag_line, _ambience(loc, rng), secret),
+    return {"text": season_msg + "%s%s%s%s%s%s%s" % (_format_catch(f, size, value, inst, first), _milestone_line(f, first), fever_line, luck_seg, frag_line, _ambience(loc, rng), secret),
             "consumed": True, "kind": "fish", "fish_name": f["name"], "rarity": f["rarity"], "first": first, "season_changed": season_changed, "luck": luck_id, "fever_hit": fever_line != "", "frag": frag_line != "", "pref": pref}
 
 def _c_cast(bait_id):
