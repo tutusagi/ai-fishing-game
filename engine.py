@@ -1474,7 +1474,7 @@ def _c_shop():
     lines = ["%s　%s　%d点　%s" % (b["id"], b["name"], b["cost"], ("（有偏好加成，见 look）" if (b["effects"].get("tag_weight_mult") or b["effects"].get("rarity_weight_mult")) else "无特殊效果")) for b in BAITS.values()]
     dive_open = bool(S.get("dive_unlocked"))   # 解锁第一个潜水点后，氧气瓶才上架（潜水是后期玩法）
     if dive_open:
-        lines.append("%s　%s　%d点　%s" % (OXYGEN["id"], OXYGEN["name"], OXYGEN["cost"], "潜水用（一瓶潜一次，dive 下水）｜套餐：买 5 瓶 8 折、10 瓶 7 折"))
+        lines.append("%s　%s　%d点　%s" % (OXYGEN["id"], OXYGEN["name"], OXYGEN["cost"], "潜水用（一瓶潜一次，dive 下水）｜套餐：买 5 瓶 8 折、10 瓶 7 折｜多带几瓶，才够应对深处大遗迹的抉择"))
     tail = "\n老板搓了搓手：「好饵能让这片水里本来就有的鱼更肯上钩、更容易出稀有货——可它变不出新鱼种。想钓没见过的鱼，得换个水域、换个季节去寻。」"
     tail += "\n「想要水下那些上不了岸的稀客？买几瓶氧气，dive 潜下去。」" if dive_open else "\n「氧气瓶？等你拼出第一张藏宝图、找到能下水的地方，再来问我。」"
     return "【商店】（buy <id> [数量]）\n" + "\n".join(lines) + tail
@@ -1575,7 +1575,11 @@ def _c_sell(target):
         sold = [c]; S["catch_inventory"] = [x for x in S["catch_inventory"] if x["instance_id"] != target]
     if not sold: return "没有可卖的（%s）。" % target
     gain = sum(c["value"] for c in sold); S["points"] += gain
-    return "卖了 %d 条，得 %d 点。现有 %d 点。（图鉴记录保留）" % (len(sold), gain, S["points"])
+    out = "卖了 %d 条，得 %d 点。现有 %d 点。（图鉴记录保留）" % (len(sold), gain, S["points"])
+    if target == "all":   # sell all 只卖鱼，背包里若还有能卖的宝物，提示一下别漏
+        treas = [(k, n) for k, n in S.get("items", {}).items() if n > 0 and ITEMS.get(k, {}).get("sellable")]
+        if treas: out += "\n💎 背包还有宝物没卖：%s（用 sell item <物品id> 单独卖）。" % "、".join("%s×%d" % (ITEMS[k]["name"], n) for k, n in treas)
+    return out
 def _c_enc():
     total = len(FISH); got = len(S["encyclopedia"]); by = {}
     for f in FISH.values():
