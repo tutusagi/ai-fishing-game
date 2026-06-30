@@ -1,0 +1,9 @@
+# 运行时从仓库根目录复制进来的引擎文件（不重复纳入版本库）
+app/fishing.py
+app/engine.py
+
+# 游戏存档（运行时生成）
+app/fishing_save.json
+
+# Python
+app/__pycache__/
