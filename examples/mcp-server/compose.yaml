@@ -1,0 +1,29 @@
+# AI 文字钓鱼 · MCP server
+# 入口方式三选一，详见 README.md。下面的默认配置适用于「方法 B：传统反代」。
+services:
+  fishing-mcp:
+    build: .
+    container_name: fishing-mcp
+    restart: unless-stopped
+    environment:
+      FISHING_HOST: "0.0.0.0"
+      FISHING_PORT: "3457"
+      # ↓↓↓ 必改：换成一长串随机值当门禁。生成： openssl rand -hex 16
+      FISHING_PATH: "/CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
+      # 盲玩（防剧透，推荐）= fishing ；完整（模型可读鱼谱概率）= engine
+      FISHING_ENGINE: "fishing"
+    volumes:
+      - ./app:/app                 # 代码 + 存档（fishing_save.json），重启不丢进度
+    ports:
+      - "127.0.0.1:3457:3457"      # 方法 B：只暴露给本机，由反代（Nginx/Caddy）转发
+      # 方法 C（局域网 / Tailscale）：改成 "3457:3457" 暴露给内网
+
+# ── 方法 A：Cloudflare Tunnel ──
+# 若 cloudflared 也是 Docker 容器，让本服务和它同处一个网络、用容器名互访：
+#   1) 删掉上面的 ports 段（走隧道不需要对外发布端口）
+#   2) 取消下面 networks 注释，把 name 换成 cloudflared 所在的网络名
+#   3) CF 路由的 Service 填  http://fishing-mcp:3457 ，Path 留空
+# networks:
+#   default:
+#     external: true
+#     name: claude-net
